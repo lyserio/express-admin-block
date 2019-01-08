@@ -1,0 +1,140 @@
+<html>
+	<head>
+		<title>Admin Panel</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<link href="/css/bootstrap.min.css" rel="stylesheet">
+		<link rel='stylesheet' href="https://cdn.datatables.net/1.10.18/css/dataTables.bootstrap4.min.css" media="none" onload="if(media!='all')media='all'">
+		<link rel='stylesheet' href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" media="none" onload="if(media!='all')media='all'">
+
+		<link rel="icon" type="image/png" href="/icons/favicon.png" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	</head>
+	<body>
+		<div class='container py-4'>
+			<h2>Admin panel</h2>
+
+			<ul class="nav nav-tabs">
+				<% for (let tab of tabs) { %>
+					<li class="nav-item">
+						<a class="nav-link active" data-tab="<%= tab.id %>" onclick="show('<%= tab.id %>')" href="javascript:"><%= tab.name %></a>
+					</li>
+				<% } %>
+				<li class="nav-item">
+						<a class="nav-link active" data-tab="broadcast" onclick="show('broadcast')" href="javascript:">Broadcast</a>
+					</li>
+			</ul>
+			
+			<br>
+			
+			<% for (let tab of tabs) { %>
+				<div class='tab' id="<%= tab.id %>" style="display: none">
+					<table class='table table-sm'>
+						<thead>
+							<tr class="text-left">
+								<% for (let field of tab.fields) { %>
+									<th scope="col"><%= field %></th>
+								<% } %>
+							</tr>
+						</thead>
+						<tbody>
+
+						<% for (let item of tab.origin) { %>
+							<tr>
+								<% for (let field of tab.fields) { %>
+									<td><%= item[field] %></td>
+								<% } %>
+							</tr>
+						<% } %>
+
+						</tbody>
+					</table>
+					<canvas id="<%= tab.id %>Chart" width="400" height="100"></canvas>
+
+				</div>
+			<% } %>
+
+			<div class='tab' id="broadcast" style="display: none">
+				<h3>Broadcasting system</h3>
+
+				<form method="POST" action="/admin/broadcast">
+
+					<input type="text" name="fromName" value="Webmaster">
+					<br>
+					<br>
+					<input type="text" name="fromEmail" value="email@example.org">
+					<br>
+					<br>
+					<input type="text" name="subject" value="Some News">
+					<br> 
+					<br> 
+					<textarea name="message" cols="100" rows="10">Hi everyone,</textarea>
+					<br>
+					<br>
+
+					<input type="submit" class='btn btn-warning' value="Send to everyone">
+				</form>
+			</div>
+		</div>
+	</body>
+
+	<footer>
+		<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+		<script src='https://cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js'></script>
+		<script src='https://cdn.datatables.net/1.10.18/js/dataTables.bootstrap4.min.js'></script>
+		
+		<script>
+			$(document).ready( () => {
+				$.each($('table'), (index, table) => {
+					$(table).DataTable();   
+				})
+			})
+
+			<% for (let tab of tabs) { %>
+
+				var ctx = document.getElementById("<%= tab.id %>Chart")
+				var myChart = new Chart(ctx, {
+					type: 'line',
+					options: {
+						elements: {
+							point: {
+								radius: 0
+							}
+						}
+					},
+					data: {
+						labels: <%- JSON.stringify(tab.labels) %>,
+						datasets: [{
+							label: '# of <%= tab.id %>',
+							data: <%- JSON.stringify(tab.amounts) %>
+						}]
+					}
+				})
+			<% } %>
+		</script>
+		<script>
+			// Switch tabs
+			function show(what) {
+
+				$('.tab').hide()
+
+				$('[data-tab].active').removeClass('active')
+				$('[data-tab="'+what+'"]').addClass('active')
+				$('#'+what).show()
+
+				if ('URLSearchParams' in window) {
+					let searchParams = new URLSearchParams(window.location.search)
+					searchParams.set("tab", what)
+					let newRelativePathQuery = window.location.pathname + '?' + searchParams.toString()
+					history.pushState(null, '', newRelativePathQuery)
+				}
+			}
+
+
+			let tab = location.search.split('tab=')[1]
+			if (tab) {
+				show(tab)
+			}
+		</script>
+	</footer>
+</html>
