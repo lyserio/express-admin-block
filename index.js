@@ -33,18 +33,40 @@ router.get('/', asyncHandler( async (req, res, next) => {
 
 	for (let tab of options.data) {
 
+		let fieldNames = tab.toShow.map(el => typeof el === 'string' ? el : el.name)
+
 		let data = {
 			name: tab.name,
-			fields: tab.toShow,
+			fields: fieldNames,
 			id: tab.name.replace(/\W/g,'_'),
 			amounts: [],
 			labels: []
 		}
 		
-		data.origin = await tab.mongo.find({}).exec()
+		let mongoArray = await tab.mongo.find({}).lean().exec()
+
+		data.array = []
+
+		// Because sometimes we want to transform the data with a render function
+		// Which supplies the entire element as a parameter
+		for (let el of mongoArray) {
+			
+			let newEl = {}
+
+			for (let field of tab.toShow) {
+				
+				if (typeof field === 'string') {
+					newEl[field] = el[field]
+				} else { // If that's an object, it has an async 'render' method
+					newEl[field.name] = await field.render(el)
+				}
+			}
+			
+			data.array.push(newEl)
+		}
 
 		// Sort by date
-		data.origin = data.origin.sort((b, a) => {
+		data.array = data.array.sort((b, a) => {
 			a = new Date(a[tab.dateField])
 			b = new Date(b[tab.dateField])
 			return a > b ? -1 : a < b ? 1 : 0
@@ -52,10 +74,10 @@ router.get('/', asyncHandler( async (req, res, next) => {
 
 		// This is needed for creating the chart
 		// Create a date range from the first created item to today
-		for (let day of getDates(data.origin[0][tab.dateField], new Date())) {
+		for (let day of getDates(data.array[0][tab.dateField], new Date())) {
 			
 			// Count how many items created before this specific day
-			let amount = data.origin.filter(e => {
+			let amount = data.array.filter(e => {
 
 				let dateDay = e[tab.dateField].toISOString().slice(0,10)
 
@@ -66,13 +88,11 @@ router.get('/', asyncHandler( async (req, res, next) => {
 			data.amounts.push(amount)
 			data.labels.push(day)
 
-
-
 		}
 
 		// Shorten dates for human readble
 		// Deep clone needed 
-		data.origin = JSON.parse(JSON.stringify(data.origin)).map(el => { 
+		data.array = JSON.parse(JSON.stringify(data.array)).map(el => { 
 			el[tab.dateField] = new Date(el[tab.dateField]).toISOString().slice(0,10)
 			return el
 		})

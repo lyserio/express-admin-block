@@ -1,6 +1,6 @@
 {
   "name": "express-admin-page",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A simple admin page for Express & Mongoose to monitor your app",
   "main": "index.js",
   "scripts": {
@@ -11,6 +11,6 @@
   "dependencies": {
     "ejs": "^2.6.1",
     "express": "^4.16.4",
-    "moment": "^2.23.0"
+    "moment": "^2.24.0"
   }
 }
