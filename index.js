@@ -46,7 +46,10 @@ router.get('/', asyncHandler( async (req, res, next) => {
 		
 		let mongoArray = await tab.mongo.find({}).lean().exec()
 
-		if (!mongoArray.length) return tabs.push(data)
+		if (!mongoArray.length) {
+			tabs.push(data)
+			continue
+		}
 
 		// Because sometimes we want to transform the data with a render function
 		// Which supplies the entire element as a parameter
