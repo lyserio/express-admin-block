@@ -58,7 +58,12 @@ router.get('/', asyncHandler( async (req, res, next) => {
 				if (typeof field === 'string') {
 					newEl[field] = el[field]
 				} else { // If that's an object, it has an async 'render' method
-					newEl[field.name] = await field.render(el)
+					try {
+						newEl[field.name] = await field.render(el)
+					} catch(e) {
+						newEl[field.name] = 'Error!'
+						console.error(e)
+					}
 				}
 			}
 			
