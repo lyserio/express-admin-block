@@ -115,20 +115,43 @@ router.get('/', asyncHandler( async (req, res, next) => {
 
 }))
 
-router.post('/broadcast', asyncHandler((req, res, next) => {
+router.post('/broadcast', asyncHandler(async (req, res, next) => {
 
-	let allUsers = db.User.find({}).exec()
+	let query = JSON.parse(req.body.mongoQuery)
 
-	for (let user of allUsers) {
-		mailgunClient.messages.create('mg.nucleus.sh', {
-			from: `${req.body.fromName} <${req.body.fromEmail}>`,
-			to: user.email,
-			subject: req.body.subject,
-			text: req.body.message
-		})
-	}
+	let allUsers = await options.data.find(t => t.name === 'Users').mongo.find(query).exec()
+	let emailsArray = allUsers.map(u => u.email)
+	console.log("Sending to:")
+	console.log(emailsArray)
 
-	res.send('Sent! <a hre="/admin">Back</a>')
+	let domain = req.body.domain
+	let tag = req.body.tag
+	let fromEmail = req.body.fromEmail
+	let fromName = req.body.fromName
+	let fromString = `${fromName} <${fromEmail.split('@')[0]}@${domain}>`
+	let messageText = req.body.messageText + "\n Unsubscribe from emails like this: %tag_unsubscribe_url%"
+	let messageHTML = req.body.messageHTML + "<br><p><a href='%tag_unsubscribe_url%'>Unsubscribe from emails like this</a></p>"
+	let subject = req.body.subject
+
+	let message = await options.mailgun.messages.create(domain, {
+		from: fromString,
+		"h:Reply-To": fromEmail,
+		"o:tag": tag,
+		"o:tracking-clicks": "yes",
+		"o:tracking-opens": "yes",
+		"o:tracking": "yes",
+		to: emailsArray,
+		subject: subject,
+		text: messageText,
+		html: messageHTML
+	})
+
+	res.send(`
+		<h3>Broadcast successfully sent to:</h3>
+		${emailsArray.map(e => e + '<br>')}
+		<br>
+		<a href="/admin?tab=broadcast">Back</a>
+	`)
 
 }))
 
