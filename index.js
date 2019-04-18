@@ -88,6 +88,8 @@ router.get('/', asyncHandler( async (req, res, next) => {
 			// Count how many items created before this specific day
 			let amount = data.array.filter(e => {
 
+				if (!e[tab.dateField]) return false
+
 				let dateDay = e[tab.dateField].toISOString().slice(0,10)
 
 				return Date.parse(dateDay) <= Date.parse(day)
@@ -101,7 +103,7 @@ router.get('/', asyncHandler( async (req, res, next) => {
 
 		// Shorten dates for human readble
 		// Deep clone needed 
-		data.array = JSON.parse(JSON.stringify(data.array)).map(el => { 
+		data.array = JSON.parse(JSON.stringify(data.array)).filter(e => e[tab.dateField]).map(el => { 
 			el[tab.dateField] = new Date(el[tab.dateField]).toISOString().slice(0,10)
 			return el
 		})
