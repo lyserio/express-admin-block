@@ -6,6 +6,7 @@ const ejs 		= require("ejs")
 let options = {}
 
 const asyncHandler = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next)
+const sleep = msec => new Promise(resolve => setTimeout(resolve, msec))
 
 // Create an array of days, in the interval
 const getDates = (startDate, stopDate) => {
@@ -118,6 +119,7 @@ router.get('/', asyncHandler( async (req, res, next) => {
 }))
 
 router.post('/broadcast', asyncHandler(async (req, res, next) => {
+	req.setTimeout(500000)
 
 	let query = JSON.parse(req.body.mongoQuery)
 
@@ -135,18 +137,22 @@ router.post('/broadcast', asyncHandler(async (req, res, next) => {
 	let messageHTML = req.body.messageHTML + "<br><p><a href='%tag_unsubscribe_url%'>Unsubscribe from emails like this</a></p>"
 	let subject = req.body.subject
 
-	let message = await options.mailgun.messages.create(domain, {
-		from: fromString,
-		"h:Reply-To": fromEmail,
-		"o:tag": tag,
-		"o:tracking-clicks": "yes",
-		"o:tracking-opens": "yes",
-		"o:tracking": "yes",
-		to: emailsArray,
-		subject: subject,
-		text: messageText,
-		html: messageHTML
-	})
+	for (let email of emailsArray) {
+		await options.mailgun.messages.create(domain, {
+			from: fromString,
+			"h:Reply-To": fromEmail,
+			"o:tag": tag,
+			"o:tracking-clicks": "yes",
+			"o:tracking-opens": "yes",
+			"o:tracking": "yes",
+			to: email,
+			subject: subject,
+			text: messageText,
+			html: messageHTML
+		})
+
+		await sleep(200)
+	}
 
 	res.send(`
 		<h3>Broadcast successfully sent to:</h3>
