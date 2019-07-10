@@ -44,7 +44,7 @@
 						<% for (let item of tab.array) { %>
 							<tr>
 								<% for (let field of tab.fields) { %>
-									<td><%= item[field] %></td>
+									<td><%- item[field] %></td>
 								<% } %>
 							</tr>
 						<% } %>
