@@ -1,23 +1,56 @@
-# express-billing-page
+# express-admin-page
 
 *Still in alpha testing.*
 
-A simple Express (4.0+) middleware for rendering an admin page, directly connected to your database.
+A simple Express (4.0+) middleware for rendering an admin page, directly connected to your MongoDB database.
 
-Made with Bootstrap 4, DataTables and Chart.JS.
+Current user is checked with `req.user`
 
 The goal is to be a drop-in admin panel for Express apps.
 
 You can add custom fields and will soon be able to add custom charts.
 
+Made with Bootstrap 4, DataTables and Chart.JS.
+
+
 ## Features
 
 - [x] Render a table for your data
 - [x] Choose fields to display
+- [ ] View complete user data object
 - [x] Chart for evolution over time
-- [x] Broadcasting function: send emails to all users
-- [ ] Broadcast emails to select users
+- [x] Broadcast: send emails to all users
+- [ ] Send email to select users
 - [ ] Edit select users
+
+
+## Who uses it?
+
+<table>
+<tr>
+	<td align="center">
+		<a href="https://nucleus.sh"><img src="https://nucleus.sh/logo_color.svg" height="64" /></a>
+	</td>
+	<td align="center">
+		<a href="https://eliopay.com"><img src="https://eliopay.com/logo_black.svg" height="64" /></a>
+	</td>
+	<td align="center">
+		<a href="https://backery.io"><img src="https://backery.io/logo_color.svg" height="64" /></a>
+	</td>
+	<td align="center">
+		<a href="https://litch.app"><img src="https://litch.app/img/logo.png" height="64" /></a>
+	</td>
+</tr>
+<tr>
+	<td align="center">Nucleus</td>
+	<td align="center">ElioPay</td>
+	<td align="center">Backery</td>
+	<td align="center">Litch.app</td>
+</tr>
+</table>
+
+_👋 Want to be listed there? [Contact me](mailto:vince@lyser.io)._
+
 
 ## Usage
 
@@ -28,11 +61,16 @@ Install the library
 npm i express-admin-page
 ```
 
-Server code:
+
+
+Include it in your app like this:
+
+`db` represents an object of Mongoose schemas.
 
 ```javascript
+
 app.use('/admin', require('express-admin-page')({
-	adminEmails: ['webmaster@website.com'],
+	adminEmails: ['webmaster@website.com'], // User needs to be logged in 
 	data: [{
 		name: 'Users',
 		type: 'mongoose',
