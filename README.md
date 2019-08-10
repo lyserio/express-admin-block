@@ -1,4 +1,5 @@
-# express-admin-page
+# express-admin-block
+[![npm version](https://badge.fury.io/js/express-admin-block.svg)](https://badge.fury.io/js/express-admin-block)
 
 *Still in alpha testing.*
 
@@ -58,9 +59,8 @@ Install the library
 
 
 ```bash
-npm i express-admin-page
+npm i express-admin-block
 ```
-
 
 
 Include it in your app like this:
@@ -69,7 +69,7 @@ Include it in your app like this:
 
 ```javascript
 
-app.use('/admin', require('express-admin-page')({
+app.use('/admin', require('express-admin-block')({
 	adminEmails: ['webmaster@website.com'], // User needs to be logged in 
 	data: [{
 		name: 'Users',
