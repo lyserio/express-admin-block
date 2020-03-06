@@ -10,20 +10,23 @@ const sleep = msec => new Promise(resolve => setTimeout(resolve, msec))
 
 // Create an array of days, in the interval
 const getDates = (startDate, stopDate) => {
-    let dateArray = []
-    let currentDate = moment(startDate)
-    stopDate = moment(stopDate)
-    while (currentDate <= stopDate) {
-        dateArray.push( moment(currentDate).format('YYYY-MM-DD') )
-        currentDate = moment(currentDate).add(1, 'days')
-    }
-    return dateArray
+	let dateArray = []
+	let currentDate = moment(startDate)
+	stopDate = moment(stopDate)
+	while (currentDate <= stopDate) {
+		dateArray.push( moment(currentDate).format('YYYY-MM-DD') )
+		currentDate = moment(currentDate).add(1, 'days')
+	}
+	return dateArray
 }
 
 // Make sure user has the rights
 router.use((req, res, next) => {
-	if (!req.user) return next('Login required for admin.')
-	if (!options.adminEmails.includes(req.user.email)) return next('Unauthorized')
+
+	if (!req.user || !options.adminEmails.includes(req.user.email)) {
+		req.session.redirectTo = '/admin'
+		return res.redirect('/login')
+	}
 	
 	next()
 })
@@ -112,54 +115,64 @@ router.get('/', asyncHandler( async (req, res, next) => {
 		tabs.push(data)
 	}
 
-	res.render(__dirname+'/admin.ejs', {
+	res.render(__dirname+'/views/statistics', {
 		tabs: tabs
 	})
 
 }))
 
+router.get('/broadcast', (req, res) => {
+	res.render(__dirname+'/views/broadcast')
+})
+
+router.post('/broadcastusers', asyncHandler( async (req, res, next) => {
+	let query
+	try {
+		query = JSON.parse(req.body.mongoQuery)
+	} catch(e) {
+		return next("Invalid JSON.")
+	}
+	const allUsers = await options.data.find(t => t.name === 'Users').mongo.find(query).exec()
+	const emailsArray = allUsers.map(u => u.email)
+
+	res.render(__dirname+'/views/broadcastform', {
+		emails: emailsArray
+	})
+}))
+
 router.post('/broadcast', asyncHandler(async (req, res, next) => {
 	req.setTimeout(500000)
 
-	let query = JSON.parse(req.body.mongoQuery)
+	const domain = req.body.domain
+	const tag = req.body.tag
+	const fromEmail = req.body.fromEmail
+	const fromName = req.body.fromName
+	const fromString = `${fromName} <${fromEmail.split('@')[0]}@${domain}>`
+	const messageHTML = req.body.messageHTML + "<br><p><a href='%tag_unsubscribe_url%'>Unsubscribe from emails like this</a></p>"
+	const subject = req.body.subject
 
-	let allUsers = await options.data.find(t => t.name === 'Users').mongo.find(query).exec()
-	let emailsArray = allUsers.map(u => u.email)
-	console.log("Sending to:")
-	console.log(emailsArray)
+	const emails = req.body.emails.map(e => e.trim())
 
-	let domain = req.body.domain
-	let tag = req.body.tag
-	let fromEmail = req.body.fromEmail
-	let fromName = req.body.fromName
-	let fromString = `${fromName} <${fromEmail.split('@')[0]}@${domain}>`
-	let messageText = req.body.messageText + "\n Unsubscribe from emails like this: %tag_unsubscribe_url%"
-	let messageHTML = req.body.messageHTML + "<br><p><a href='%tag_unsubscribe_url%'>Unsubscribe from emails like this</a></p>"
-	let subject = req.body.subject
+	res.send(`
+		<h3>Broadcast is sending to:</h3>
+		${emails.map(e => e + '<br>')}
+		<br>
+		<a href="/admin">Back</a>
+	`)
 
-	for (let email of emailsArray) {
-		await options.mailgun.messages.create(domain, {
+	for (let email of emails) {
+
+		await options.sendMail(subject, messageHTML, email, {
 			from: fromString,
 			"h:Reply-To": fromEmail,
 			"o:tag": tag,
 			"o:tracking-clicks": "yes",
 			"o:tracking-opens": "yes",
-			"o:tracking": "yes",
-			to: email,
-			subject: subject,
-			text: messageText,
-			html: messageHTML
+			"o:tracking": "yes"
 		})
 
 		await sleep(200)
 	}
-
-	res.send(`
-		<h3>Broadcast successfully sent to:</h3>
-		${emailsArray.map(e => e + '<br>')}
-		<br>
-		<a href="/admin?tab=broadcast">Back</a>
-	`)
 
 }))
 

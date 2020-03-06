@@ -1,0 +1,10 @@
+<%- include('./header') %>
+
+<h3>Who to send to?</h3>
+<form id='broadcastForm' class='my-5' method="POST" action="/admin/broadcastusers">
+	<div class='form-group'>
+		<label>User Mongo Query (example: {"plan": "free"} or {} for everyone)</label>
+		<input class='form-control' type="text" name="mongoQuery" placeholder="{}" />
+	</div>
+	<button class='btn btn-primary' type='submit'>Next →</button>
+</form>

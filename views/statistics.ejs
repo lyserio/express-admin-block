@@ -1,0 +1,87 @@
+<%- include('./header') %>
+
+<ul class="my-5 nav nav-tabs">
+	<% for (let tab of tabs) { %>
+		<li class="nav-item">
+			<a class="nav-link active" data-tab="<%= tab.id %>" onclick="show('<%= tab.id %>')" href="javascript:"><%= tab.name %></a>
+		</li>
+	<% } %>
+</ul>
+
+<% for (let tab of tabs) { %>
+	<div class='mt-3 tab' id="<%= tab.id %>" style="display: none">
+		<table class='table table-sm'>
+			<thead>
+				<tr class="text-left">
+					<% for (let field of tab.fields) { %>
+						<th scope="col"><%= field %></th>
+					<% } %>
+				</tr>
+			</thead>
+			<tbody>
+
+			<% for (let item of tab.array) { %>
+				<tr>
+					<% for (let field of tab.fields) { %>
+						<td><%- item[field] %></td>
+					<% } %>
+				</tr>
+			<% } %>
+
+			</tbody>
+		</table>
+
+		<canvas class='mt-5' id="<%= tab.id %>Chart" width="400" height="100"></canvas>
+
+	</div>
+<% } %>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+<script src='https://cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js'></script>
+<script src='https://cdn.datatables.net/1.10.18/js/dataTables.bootstrap4.min.js'></script>
+
+<script>
+
+<% for (let tab of tabs) { %>
+
+	var ctx = document.getElementById("<%= tab.id %>Chart")
+	var myChart = new Chart(ctx, {
+		type: 'line',
+		options: {
+			elements: {
+				point: {
+					radius: 0
+				}
+			}
+		},
+		data: {
+			labels: <%- JSON.stringify(tab.labels) %>,
+			datasets: [{
+				label: '# of <%= tab.id %>',
+				data: <%- JSON.stringify(tab.amounts) %>
+			}]
+		}
+	})
+<% } %>
+
+// Switch tabs
+function show(what) {
+
+	$('.tab').hide()
+
+	$('[data-tab].active').removeClass('active')
+	$('[data-tab="'+what+'"]').addClass('active')
+	$('#'+what).show()
+
+	if ('URLSearchParams' in window) {
+		let searchParams = new URLSearchParams(window.location.search)
+		searchParams.set("tab", what)
+		let newRelativePathQuery = window.location.pathname + '?' + searchParams.toString()
+		history.pushState(null, '', newRelativePathQuery)
+	}
+}
+
+let tab = location.search.split('tab=')[1]
+if (tab) show(tab)
+else show("<%= tabs[0].id %>")
+</script>

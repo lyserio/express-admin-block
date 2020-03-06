@@ -1,6 +1,6 @@
 {
   "name": "express-admin-block",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "Admin page for Express + Mongoose to monitor your app send updates to users",
   "main": "index.js",
   "scripts": {
