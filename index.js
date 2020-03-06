@@ -162,17 +162,24 @@ router.post('/broadcast', asyncHandler(async (req, res, next) => {
 
 	for (let email of emails) {
 
-		await options.sendMail(subject, messageHTML, email, {
-			from: fromString,
-			"h:Reply-To": fromEmail,
-			"o:tag": tag,
-			"o:tracking-clicks": "yes",
-			"o:tracking-opens": "yes",
-			"o:tracking": "yes"
-		})
+		try {
+			console.log('Sending to ' + email)
+			await options.sendMail(subject, messageHTML, email, {
+				from: fromString,
+				"h:Reply-To": fromEmail,
+				"o:tag": tag,
+				"o:tracking-clicks": "yes",
+				"o:tracking-opens": "yes",
+				"o:tracking": "yes"
+			})
+		} catch(e) {
+			console.error('Error')
+		}
 
 		await sleep(200)
 	}
+
+	console.log('Finished broadcasting.')
 
 }))
 
